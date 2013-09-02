@@ -33,23 +33,32 @@ class Twitter_Controller extends Controller
 		$parameters = array();
 		$parameters["q"] = urlencode(join($keywords, " OR "));
 		$parameters["count"] = urlencode($count);
+		$parameters["include_entities"] = true;
 
 		if ( ! empty($location) ) 
 		{
 			$parameters["geocode"] = urlencode($location);
 		}
 
+		$settings = ORM::factory('socialmedia_settings')->where('setting', 'twitter_last_id')->find();
+
+		if (! is_null($settings->value)) {
+			$parameters["since_id"] = $settings->value;
+		}
+
+		var_dump($parameters);
+
 		if ( ! empty($since) ) 
 		{
 			$parameters["since"] = urlencode($since);
 		}
 
+		//var_dump($parameters);
+
 		//make request using fancy Twitter class method
 		$result = $twitter->oAuthRequest(self::API_URL, 'GET', $parameters);
 		//var_dump($result);
 		$result = json_decode($result, true);
-
-
 
 		if (isset($result["errors"])) 
 		{
@@ -57,38 +66,46 @@ class Twitter_Controller extends Controller
 			return false;
 		}
 
-		return $this->parse($result);
+		$result = $this->parse($result, (is_null($settings->value) ? 0 : $settings->value));
+
+		$settings->setting = 'twitter_last_id';
+		$settings->value = $result["highest_id"];
+		$settings->save();
+
 	}
 
 	/**
 	*
 	*/
-	public function parse($array_result) {
+	public function parse($array_result, $highest_id = 0) {
 		$statuses = $array_result["statuses"];
-		foreach ($statuses as $s) {
-			$entry = ORM::factory("Twitter");
 
-			/*$entry->status = $entry::TO_REVIEW;
+		foreach ($statuses as $s) {
+			$entry = ORM::factory("Socialmedia");
+
+			$entry->status = $entry::STATUS_TOREVIEW;
+			$entry->channel = $entry::CHANNEL_TWITTER;
 			$entry->channel_id = $s["id_str"];
 			$entry->message = $s["text"];
-			$entry->original_date = $s["created_at"];
+			$entry->original_date = strtotime($s["created_at"]);
+			$entry->url = "http://twitter.com/" . $s["user"]["screen_name"] . "/status/" . $s["id_str"];
+
 			if ( ! is_null($s["coordinates"]) ) 
 			{
-				$entry["lat"] = $s["coordinates"][1]; //twitter uses long,lat
-				$entry["long"] = $s["coordinates"][0];
-			}*/
+				$entry->latitude = $s["coordinates"]["coordinates"][1]; //twitter uses long,lat
+				$entry->longitude = $s["coordinates"]["coordinates"][0];
+			}
 
-			echo "A";
-			//var_dump($entry);
-/*
-			var_dump($entry->save());
+			$entry->save();
 			unset($entry);
-			var_dump("A");
-			die();
-*/
-			//var_dump($s);
+
+			if ($s["id_str"] >	 $highest_id) {
+				$highest_id = $s["id_str"];
+			}
 		}
 
-//		return true;
+		return array(
+				"highest_id"		=> $highest_id
+			);
 	}
 }
