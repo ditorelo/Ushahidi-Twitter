@@ -35,7 +35,7 @@ class Twitter_Controller extends Controller
 		$parameters["count"] = urlencode($count);
 		$parameters["include_entities"] = true;
 
-		if ( ! empty($location) ) 
+		if (! empty($location))
 		{
 			$parameters["geocode"] = urlencode($location);
 		}
@@ -48,7 +48,7 @@ class Twitter_Controller extends Controller
 
 		var_dump($parameters);
 
-		if ( ! empty($since) ) 
+		if (! empty($since))
 		{
 			$parameters["since"] = urlencode($since);
 		}
@@ -60,7 +60,7 @@ class Twitter_Controller extends Controller
 		//var_dump($result);
 		$result = json_decode($result, true);
 
-		if (isset($result["errors"])) 
+		if (isset($result["errors"]))
 		{
 			var_dump($result["errors"]);
 			return false;
