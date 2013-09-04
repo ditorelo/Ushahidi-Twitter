@@ -19,7 +19,7 @@ class Twitter_Controller extends Controller
 	/**
 	*
 	*/
-	public function search($keywords, $location, $since, $count = 100)
+	public function search($keywords, $location, $since)
 	{
 		$consumer_key = "atPNN395YkX2kUvN2vEiQ";
 		$consumer_secret = "gqofxaB9Hbg2KGPBCZ9A7RDOTiHy4k7a1CHO4xfO0";
@@ -32,12 +32,12 @@ class Twitter_Controller extends Controller
 		// set up parameters for url
 		$parameters = array();
 		$parameters["q"] = urlencode(join($keywords, " OR "));
-		$parameters["count"] = urlencode($count);
 		$parameters["include_entities"] = true;
 
 		if (! empty($location))
 		{
-			$parameters["geocode"] = urlencode($location);
+			$location = number_format($location["lat"],6) . "," . number_format($location["lon"],6) . "," . $location["radius"] . "km";
+			$parameters["geocode"] = $location;
 		}
 
 		$settings = ORM::factory('socialmedia_settings')->where('setting', 'twitter_last_id')->find();
@@ -45,15 +45,13 @@ class Twitter_Controller extends Controller
 		if (! is_null($settings->value)) {
 			$parameters["since_id"] = $settings->value;
 		}
-
-		var_dump($parameters);
-
-		if (! empty($since))
+		else 
 		{
-			$parameters["since"] = urlencode($since);
+			if (! empty($since))
+			{
+				$parameters["since"] = urlencode($since);
+			}
 		}
-
-		//var_dump($parameters);
 
 		//make request using fancy Twitter class method
 		$result = $twitter->oAuthRequest(self::API_URL, 'GET', $parameters);
