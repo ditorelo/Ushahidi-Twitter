@@ -21,10 +21,10 @@ class Twitter_Controller extends Controller
 	*/
 	public function search($keywords, $location, $since)
 	{
-		$consumer_key = "atPNN395YkX2kUvN2vEiQ";
-		$consumer_secret = "gqofxaB9Hbg2KGPBCZ9A7RDOTiHy4k7a1CHO4xfO0";
-		$access_token = "11174562-aVilaH6SctBhTMHo1cVvArBpGLdq5KbfUPJOFRXYc";
-		$access_token_secret = "7AUjtxzD5x6WbH7mVEFZ6UqZ5hYVpMlyqX8tuTWZw";
+		$consumer_key = socialmedia_helper::getSetting('twitter_api_key');
+		$consumer_secret = socialmedia_helper::getSetting('twitter_api_key_secret');
+		$access_token = socialmedia_helper::getSetting('twitter_token');
+		$access_token_secret = socialmedia_helper::getSetting('twitter_token_secret');
 
 		// Gets token based on info provided by user
 		$twitter = new Twitter_Oauth($consumer_key, $consumer_secret, $access_token, $access_token_secret);
@@ -45,7 +45,7 @@ class Twitter_Controller extends Controller
 		if (! is_null($settings->value)) {
 			$parameters["since_id"] = $settings->value;
 		}
-		else 
+		else
 		{
 			if (! empty($since))
 			{
