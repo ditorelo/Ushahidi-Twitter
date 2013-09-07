@@ -79,25 +79,47 @@ class Twitter_Controller extends Controller
 		$statuses = $array_result["statuses"];
 
 		foreach ($statuses as $s) {
-			$entry = ORM::factory("Socialmedia");
+			$entry = ORM::factory("Socialmedia_Message")
+						->where("channel_id", $s["id_str"])
+						->where("channel", Socialmedia_Message_Model::CHANNEL_TWITTER)
+						->find();
 
-			$entry->status = $entry::STATUS_TOREVIEW;
-			$entry->channel = $entry::CHANNEL_TWITTER;
-			$entry->channel_id = $s["id_str"];
-			$entry->message = $s["text"];
-			$entry->original_date = strtotime($s["created_at"]);
-			$entry->url = "http://twitter.com/" . $s["user"]["screen_name"] . "/status/" . $s["id_str"];
-
-			if ( ! is_null($s["coordinates"]) ) 
+			if (! $entry->loaded) 
 			{
-				$entry->latitude = $s["coordinates"]["coordinates"][1]; //twitter uses long,lat
-				$entry->longitude = $s["coordinates"]["coordinates"][0];
+
+				$author = ORM::factory("Socialmedia_Author")
+							->where("channel_id", $s["user"]["id_str"])
+							->where("channel", Socialmedia_Message_Model::CHANNEL_TWITTER)
+							->find();
+
+				if (! $author->loaded) 
+				{
+					$author->channel_id = $s["user"]["id_str"];
+					$author->channel = Socialmedia_Message_Model::CHANNEL_TWITTER;
+					$author->author = $s["user"]["screen_name"];
+					$author->save();
+				}
+
+				$entry->status = $entry::STATUS_TOREVIEW;
+				$entry->channel = Socialmedia_Message_Model::CHANNEL_TWITTER;
+				$entry->channel_id = $s["id_str"];
+				$entry->message = $s["text"];
+				$entry->original_date = strtotime($s["created_at"]);
+				$entry->url = "http://twitter.com/" . $s["user"]["screen_name"] . "/status/" . $s["id_str"];
+				$entry->author_id = $author->id;
+
+				if ( ! is_null($s["coordinates"]) ) 
+				{
+					$entry->latitude = $s["coordinates"]["coordinates"][1]; //twitter uses long,lat
+					$entry->longitude = $s["coordinates"]["coordinates"][0];
+				}
+
+				$entry->save();
 			}
 
-			$entry->save();
 			unset($entry);
 
-			if ($s["id_str"] >	 $highest_id) {
+			if ($s["id_str"] > $highest_id) {
 				$highest_id = $s["id_str"];
 			}
 		}
