@@ -15,5 +15,6 @@ Enables twitter crawling for Ushahidi copy
 UshahidiSocialMedia plugin
 
 == Installation ==
-1. Copy the entire /twitter/ directory into your /plugins/ directory.
-2. Activate the plugin.
+1. Create a directory called "socialmedia-twitter" inside your /plugins/ directory
+2. Copy the entire all files directory into your /plugins/socialmedia-twitter directory.
+3. Activate the plugin.

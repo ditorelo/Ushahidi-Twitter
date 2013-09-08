@@ -97,6 +97,7 @@ class Twitter_Controller extends Controller
 					$author->channel_id = $s["user"]["id_str"];
 					$author->channel = Socialmedia_Message_Model::CHANNEL_TWITTER;
 					$author->author = $s["user"]["screen_name"];
+					$author->status = Socialmedia_Author_Model::STATUS_NORMAL;
 					$author->save();
 				}
 
@@ -108,13 +109,42 @@ class Twitter_Controller extends Controller
 				$entry->url = "http://twitter.com/" . $s["user"]["screen_name"] . "/status/" . $s["id_str"];
 				$entry->author_id = $author->id;
 
-				if ( ! is_null($s["coordinates"]) ) 
+				// saves entities in array for later
+				$media = array();
+				if (count($s["entities"]["urls"]) > 0) 
+				{
+					$media["url"] = array();
+
+					foreach ($s["entities"]["urls"] as $url) {
+						$media["url"][] = $url["expanded_url"];
+					}
+				}
+
+				if (isset($s["entities"]["media"]) && count($s["entities"]["media"]) > 0)
+				{
+					$media["photo"] = array();
+					$media["other"] = array();
+
+					foreach ($s["entities"]["media"] as $url) {
+						if ($url["type"] == "photo")
+						{
+							$media["photo"][] = $url["media_url"];
+						} else {
+							$media["other"][] = $url["media_url"];
+						}
+					}
+				}
+
+
+				if (! is_null($s["coordinates"]))
 				{
 					$entry->latitude = $s["coordinates"]["coordinates"][1]; //twitter uses long,lat
 					$entry->longitude = $s["coordinates"]["coordinates"][0];
 				}
 
 				$entry->save();
+
+				$entry->addAssets($media);
 			}
 
 			unset($entry);
