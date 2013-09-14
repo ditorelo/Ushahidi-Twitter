@@ -27,10 +27,11 @@ class Twitter_Controller extends Admin_Controller {
 		}
 	}
 
+	// Function that tests Twitter settings
 	function test() 
 	{
 		$this->template = "";
-		$this->auto_render =FALSE;
+		$this->auto_render = FALSE;
 
 		// grab the necessary keys consumer key, secret, token, token secret
 		$consumer_key = socialmedia_helper::getSetting('twitter_api_key');
