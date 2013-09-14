@@ -16,6 +16,14 @@ class Twitter_Controller extends Controller
 {
 	const API_URL = "https://api.twitter.com/1.1/search/tweets.json?";
 
+	var $service = null;
+
+	public function __construct() {
+		$this->service = ORM::factory("Service")
+								->where("service_name", "SocialMedia Twitter")
+								->find();
+	}
+
 	/**
 	* Search function for Twitter
 	* @param array $keywords Keyworkds for search
@@ -45,20 +53,11 @@ class Twitter_Controller extends Controller
 			$location = number_format($location["lat"],6) . "," . number_format($location["lon"],6) . "," . $location["radius"] . "km";
 			$parameters["geocode"] = $location;
 		}
-
 		// uses last id in case we have one
 		$settings = ORM::factory('socialmedia_settings')->where('setting', 'twitter_last_id')->find();
 		if (! is_null($settings->value)) {
 			$parameters["since_id"] = $settings->value;
-		}
-		else
-		{
-			// uses a since date in case it is set and we don't have a last id set
-			if (! empty($since))
-			{
-				$parameters["since"] = urlencode($since);
-			}
-		}
+		}	
 
 		//make request using fancy Twitter class method
 		$result = $twitter->oAuthRequest(self::API_URL, 'GET', $parameters);
@@ -104,39 +103,28 @@ class Twitter_Controller extends Controller
 		$statuses = $array_result["statuses"];
 
 		foreach ($statuses as $s) {
-			$entry = ORM::factory("Socialmedia_Message")
-						->where("channel_id", $s["id_str"])
-						->where("channel", Socialmedia_Message_Model::CHANNEL_TWITTER)
-						->find();
+			$entry = Socialmedia_Message_Model::getMessage($s["id_str"], $this->service->id);
 
 			// don't resave messages we already have
 			if (! $entry->loaded) 
 			{
-
-				// catch author if they already exist
-				$author = ORM::factory("Socialmedia_Author")
-							->where("channel_id", $s["user"]["id_str"])
-							->where("channel", Socialmedia_Message_Model::CHANNEL_TWITTER)
-							->find();
-
-				// save author in case they don't exist
-				if (! $author->loaded) 
-				{
-					$author->channel_id = $s["user"]["id_str"];
-					$author->channel = Socialmedia_Message_Model::CHANNEL_TWITTER;
-					$author->author = $s["user"]["screen_name"];
-					$author->status = Socialmedia_Author_Model::STATUS_NORMAL;
-					$author->save();
+				if (! $entry->reporter->loaded) {
+					// catch author if they already exist
+					$entry->reporter_id = Socialmedia_Message_Model::getAuthor(
+																		$this->service->id, 
+																		$s["user"]["id_str"], 
+																		$s["user"]["name"],
+																		null,
+																		"@" . $s["user"]["screen_name"]
+																	);
 				}
 
 				// get message data
-				$entry->status = $entry::STATUS_TOREVIEW;
-				$entry->channel = Socialmedia_Message_Model::CHANNEL_TWITTER;
-				$entry->channel_id = $s["id_str"];
-				$entry->message = $s["text"];
-				$entry->original_date = strtotime($s["created_at"]);
-				$entry->url = "http://twitter.com/" . $s["user"]["screen_name"] . "/status/" . $s["id_str"];
-				$entry->author_id = $author->id;
+				$entry->setMessageLevel($entry::STATUS_TOREVIEW);
+				$entry->setMessageId($s["id_str"]);
+				$entry->setMessageFrom($this->service->service_name);
+				$entry->setMessageDetail($s["text"]);
+				$entry->setMessageDate(date("Y-m-d H:i:s", strtotime($s["created_at"])));
 
 				// saves entities in array for later
 				$media = array();
@@ -167,12 +155,14 @@ class Twitter_Controller extends Controller
 				// geo data
 				if (! is_null($s["coordinates"]))
 				{
-					$entry->latitude = $s["coordinates"]["coordinates"][1]; //twitter uses long,lat
-					$entry->longitude = $s["coordinates"]["coordinates"][0];
+					//twitter uses long,lat
+					$entry->setCoordinates($s["coordinates"]["coordinates"][1], $s["coordinates"]["coordinates"][0]);
 				}
 
 				// save message and assign data to it
 				$entry->save();
+
+				$entry->addData("url", "http://twitter.com/" . $s["user"]["screen_name"] . "/status/" . $s["id_str"]);
 				$entry->addAssets($media);
 			}
 

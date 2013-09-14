@@ -22,12 +22,11 @@ class Socialmedia_twitter_Install {
 		$twitter_service = ORM::factory("Service")->where("service_name", "SocialMedia Twitter")->find_all();
 
 		if ($twitter_service->count() == 0) {
+			$twitter_service = ORM::factory("Service");
 			$twitter_service->service_name = "SocialMedia Twitter";
-			$twitter_service->description = "Implements Twitter Crawling for Social Media plugin";
+			$twitter_service->service_description = "Implements Twitter Crawling for Social Media plugin";
 			$twitter_service->save();
 		}
-
-		die();
 	}
 
 
