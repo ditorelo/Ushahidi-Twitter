@@ -12,7 +12,7 @@
  * @license	   http://www.gnu.org/copyleft/lesser.html GNU Lesser General Public License (LGPL) 
 */
 
-class Twitter_Controller extends Controller
+class Socialmedia_Twitter_Controller extends Controller
 {
 	const API_URL = "https://api.twitter.com/1.1/search/tweets.json?";
 
@@ -65,8 +65,8 @@ class Twitter_Controller extends Controller
 
 		if (isset($result["errors"]))
 		{
-			// TODO: Better error handling
-			var_dump($result["errors"]);
+			// TODO: Better error handling?
+			throw new Exception("Socialmedia_Twitter: " . $result["errors"][0]["message"], $result["errors"][0]["code"]);
 			return false;
 		}
 
@@ -104,7 +104,7 @@ class Twitter_Controller extends Controller
 
 		foreach ($statuses as $s) {
 			$entry = Socialmedia_Message_Model::getMessage($s["id_str"], $this->service->id);
-
+			
 			// don't resave messages we already have
 			if (! $entry->loaded) 
 			{
