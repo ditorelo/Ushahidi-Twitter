@@ -103,28 +103,26 @@ class Socialmedia_Twitter_Controller extends Controller
 		$statuses = $array_result["statuses"];
 
 		foreach ($statuses as $s) {
+			var_dump($s);	
 			$entry = Socialmedia_Message_Model::getMessage($s["id_str"], $this->service->id);
-			
+
 			// don't resave messages we already have
 			if (! $entry->loaded) 
 			{
-				if (! $entry->reporter->loaded) {
-					// catch author if they already exist
-					$entry->reporter_id = Socialmedia_Message_Model::getAuthor(
-																		$this->service->id, 
-																		$s["user"]["id_str"], 
-																		$s["user"]["name"],
-																		null,
-																		"@" . $s["user"]["screen_name"]
-																	);
-				}
-
-				// get message data
+				// set message data
+				$entry->setServiceId($this->service->id);
 				$entry->setMessageLevel($entry::STATUS_TOREVIEW);
 				$entry->setMessageId($s["id_str"]);
 				$entry->setMessageFrom($this->service->service_name);
 				$entry->setMessageDetail($s["text"]);
 				$entry->setMessageDate(date("Y-m-d H:i:s", strtotime($s["created_at"])));
+
+				$entry->setAuthor(
+					$s["user"]["id_str"], 
+					$s["user"]["name"],
+					null,
+					"@" . $s["user"]["screen_name"]
+				);
 
 				// saves entities in array for later
 				$media = array();
