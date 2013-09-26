@@ -103,7 +103,6 @@ class Socialmedia_Twitter_Controller extends Controller
 		$statuses = $array_result["statuses"];
 
 		foreach ($statuses as $s) {
-			var_dump($s);	
 			$entry = Socialmedia_Message_Model::getMessage($s["id_str"], $this->service->id);
 
 			// don't resave messages we already have
