@@ -12,9 +12,10 @@ author website: github.com/ditorelo
 Enables twitter crawling for Ushahidi copy
 
 === Requires ===
-UshahidiSocialMedia plugin
+UshahidiSocialMedia plugin (https://github.com/ditorelo/Ushahidi-SocialMedia)
 
 == Installation ==
 1. Create a directory called "socialmedia-twitter" inside your /plugins/ directory
 2. Copy the entire all files directory into your /plugins/socialmedia-twitter directory.
 3. Activate the plugin.
+4. Go to Settings > SocialMedia > Twitter to enter your API credentials.
